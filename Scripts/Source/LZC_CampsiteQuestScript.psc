@@ -39,6 +39,9 @@ Float Property FireBurnHours = 6.0 Auto
 {How long a fire lit with firewood burns, in game hours.}
 Int Property FirewoodPerFire = 2 Auto
 {How many firewood lighting the fire burns (SKSE menu: 1 to 6).}
+Bool Property StewsAtCampfire = False Auto
+{Off: the camp fire's Cook menu leaves out stews and soups (recipes needing two
+or more different ingredients, salt aside), as there's no cooking pot.}
 Furniture Property LZC_FireLightingMarker Auto
 {Optional (after Usable Campfires): furniture the player crouches at to strike
 stones when lighting the fire with firewood. Without it the fire lights at
@@ -290,7 +293,7 @@ Int Property kCookingStation = 37 AutoReadOnly     ; hidden, at the fire
 Int Property kTub = 38 AutoReadOnly
 Int Property kSlotCount = 39 AutoReadOnly
 
-Int Property kNativeVersion = 20 AutoReadOnly         ; LazyCamping.dll needed
+Int Property kNativeVersion = 21 AutoReadOnly         ; LazyCamping.dll needed
 
 ObjectReference[] placedRefs
 ; With BedrollsStartRolled: each bedroll's rolled-up bedroll (None once
@@ -313,6 +316,8 @@ Bool busy = False
 ; ---------------------------------------------------------------------------
 Int Function GetVersion() Global Native
 ObjectReference Function GetCookBox() Global Native
+; Leaves the stews out of the next Cook menu at akStation (no cooking pot).
+Function BeginCampCooking(ObjectReference akStation) Global Native
 ; The text for asKey in the game's language, from Interface/Translations/
 ; Wayfarer - A Convenient Camping Framework_<LANGUAGE>.txt, or asEnglish; any
 ; {} in it becomes asArg.
@@ -548,6 +553,9 @@ Function Cook()
 	ObjectReference station = placedRefs[kCookingStation]
 	If station
 		Debug.Trace("Wayfarer: cooking at " + station + ", enabled " + station.IsEnabled() + ", 3D " + station.Is3DLoaded())
+		If !StewsAtCampfire
+			BeginCampCooking(station)
+		EndIf
 		station.Activate(PlayerRef)
 	Else
 		Debug.Trace("Wayfarer: no cooking station to cook at")

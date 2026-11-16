@@ -1,4 +1,5 @@
 #include "BedrollSeats.h"
+#include "CampCooking.h"
 #include "CampLayout.h"
 #include "Events.h"
 #include "GrassHider.h"
@@ -51,6 +52,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 			Events::Install();
 			VendorKits::Inject();
 			BedrollSeats::InstallSleepMenu();
+			CampCooking::Install();
 		} else if (a_message->type == SKSE::MessagingInterface::kPostLoadGame ||
 				   a_message->type == SKSE::MessagingInterface::kNewGame) {
 			Menu::ApplyLoadedSettings();

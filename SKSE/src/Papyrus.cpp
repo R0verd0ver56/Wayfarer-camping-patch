@@ -1,6 +1,7 @@
 #include "Papyrus.h"
 
 #include "BedrollSeats.h"
+#include "CampCooking.h"
 #include "CampKits.h"
 #include "CampLayout.h"
 #include "FormNames.h"
@@ -20,7 +21,7 @@ namespace Papyrus
 	namespace
 	{
 		constexpr auto         kClass = "LZC_CampsiteQuestScript"sv;
-		constexpr std::int32_t kVersion = 20;
+		constexpr std::int32_t kVersion = 21;
 
 		constexpr RE::FormID kXMarkerHeading = 0x34;  // Skyrim.esm
 
@@ -112,6 +113,11 @@ namespace Papyrus
 				text.replace(at, 2, a_arg.c_str());
 			}
 			return text;
+		}
+
+		void BeginCampCooking(RE::StaticFunctionTag*, RE::TESObjectREFR* a_station)
+		{
+			CampCooking::Begin(a_station);
 		}
 
 		std::int32_t GetVersion(RE::StaticFunctionTag*)
@@ -450,6 +456,7 @@ namespace Papyrus
 	bool Register(RE::BSScript::IVirtualMachine* a_vm)
 	{
 		a_vm->RegisterFunction("GetVersion"sv, kClass, GetVersion);
+		a_vm->RegisterFunction("BeginCampCooking"sv, kClass, BeginCampCooking);
 		a_vm->RegisterFunction("Tr"sv, kClass, Tr);
 		a_vm->RegisterFunction("RenameForm"sv, kClass, RenameForm);
 		a_vm->RegisterFunction("PackUpRefs"sv, kClass, PackUpRefs);
