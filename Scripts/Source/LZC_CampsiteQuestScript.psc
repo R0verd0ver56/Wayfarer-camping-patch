@@ -39,9 +39,13 @@ Float Property FireBurnHours = 6.0 Auto
 {How long a fire lit with firewood burns, in game hours.}
 Int Property FirewoodPerFire = 2 Auto
 {How many firewood lighting the fire burns (SKSE menu: 1 to 6).}
-Bool Property StewsAtCampfire = False Auto
-{Off: the camp fire's Cook menu leaves out stews and soups (recipes needing two
-or more different ingredients, salt aside), as there's no cooking pot.}
+Form Property LZC_CampCookpot Auto
+{Optional. The base object of the cooking pot in the fire clutter sets. With
+PlaceCookpot off, it's left out of the camp, and so are the stews.}
+Bool Property PlaceCookpot = True Auto
+{The fire clutter's cooking pot (SKSE menu). Without a cooking pot, the camp
+fire's Cook menu leaves out stews and soups (recipes needing two or more
+different ingredients, salt aside).}
 Furniture Property LZC_FireLightingMarker Auto
 {Optional (after Usable Campfires): furniture the player crouches at to strike
 stones when lighting the fire with firewood. Without it the fire lights at
@@ -553,7 +557,7 @@ Function Cook()
 	ObjectReference station = placedRefs[kCookingStation]
 	If station
 		Debug.Trace("Wayfarer: cooking at " + station + ", enabled " + station.IsEnabled() + ", 3D " + station.Is3DLoaded())
-		If !StewsAtCampfire
+		If !PlaceCookpot || !LZC_CampCookpot
 			BeginCampCooking(station)
 		EndIf
 		station.Activate(PlayerRef)

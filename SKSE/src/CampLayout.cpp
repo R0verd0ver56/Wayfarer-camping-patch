@@ -1393,6 +1393,17 @@ namespace CampLayout
 			{
 				auto* campfire = a_refs[kCampfire];
 
+				// The fire clutter's cooking pot, left out with PlaceCookpot off.
+				if (auto* cookpot = _props.Form<RE::TESForm>("LZC_CampCookpot"); cookpot && !_props.Bool("PlaceCookpot", true)) {
+					for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
+						if (auto* ref = a_refs[i]; ref && ref->GetBaseObject() == cookpot) {
+							ref->Disable();
+							ref->SetDelete(true);
+							a_refs[i] = nullptr;
+						}
+					}
+				}
+
 				// The cook box over the fire, enabled only while it's lit. If its
 				// base (LZC_CookActivator) has a model (an invisible collision
 				// box), a new one is placed with each camp; otherwise the one

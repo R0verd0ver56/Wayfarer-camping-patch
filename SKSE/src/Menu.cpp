@@ -45,6 +45,7 @@ namespace Menu
 			bool         tentCollision{ true };
 			int          lightLevel{ 3 };  // the slider: 0 off (Light Placer), 1 dim, 2 medium, 3 bright
 			bool         lightShadows{ false };
+			bool         placeCookpot{ true };
 		};
 
 		constexpr std::pair<std::string_view, const char*> kBedrollStyles[] = {
@@ -128,7 +129,8 @@ namespace Menu
 			auto*  tentCollision = object ? AutoProperty(object.get(), "TentCollision") : nullptr;
 			auto*  lightLevel = object ? AutoProperty(object.get(), "CampfireLightLevel") : nullptr;
 			auto*  lightShadows = object ? AutoProperty(object.get(), "CampfireLightShadows") : nullptr;
-			const bool found = firewood && burnHours && block && grass && light && tub && tubInTent && slope && seat && bedroll && merchants && perFire && mapMarker && rolled && campfire && fireSeats && fade && fireOutside && tentCollision && lightLevel && lightShadows;
+			auto*  cookpot = object ? AutoProperty(object.get(), "PlaceCookpot") : nullptr;
+			const bool found = firewood && burnHours && block && grass && light && tub && tubInTent && slope && seat && bedroll && merchants && perFire && mapMarker && rolled && campfire && fireSeats && fade && fireOutside && tentCollision && lightLevel && lightShadows && cookpot;
 			if (found) {
 				auto* dataHandler = RE::TESDataHandler::GetSingleton();
 				values = { firewood->GetBool(), burnHours->GetFloat(), block->GetBool(), grass->GetBool(), light->GetBool(), tub->GetBool(),
@@ -136,7 +138,7 @@ namespace Menu
 					PluginLoaded(kBedrollAltPlugin),
 					merchants->GetBool(), perFire->GetSInt(), mapMarker->GetBool(), rolled->GetBool(), campfire->GetBool(), fireSeats->GetBool(), fade->GetBool(),
 					PluginLoaded(kAshNomadBedrollsPlugin), fireOutside->GetBool(), tentCollision->GetBool(),
-					SliderLevel(light->GetBool(), lightLevel->GetSInt()), lightShadows->GetBool() };
+					SliderLevel(light->GetBool(), lightLevel->GetSInt()), lightShadows->GetBool(), cookpot->GetBool() };
 			}
 
 			std::scoped_lock guard(lock);
@@ -167,6 +169,9 @@ namespace Menu
 				}
 				if (auto* light = AutoProperty(object.get(), "PlaceCampfireLight")) {
 					light->SetBool(a_values.lightLevel > 0);
+				}
+				if (auto* cookpot = AutoProperty(object.get(), "PlaceCookpot")) {
+					cookpot->SetBool(a_values.placeCookpot);
 				}
 				if (auto* lightShadows = AutoProperty(object.get(), "CampfireLightShadows")) {
 					lightShadows->SetBool(a_values.lightShadows);
@@ -306,6 +311,8 @@ namespace Menu
 					ImGuiMCP::SetItemTooltip(T("$LZC_CampfireLightShadowsTip", "The campfire light casts shadows. Costs some performance. Takes effect at the next camp."));
 					ImGuiMCP::EndDisabled();
 				}
+				changed |= ImGuiMCP::Checkbox(T("$LZC_Cookpot", "Cooking pot"), &values.placeCookpot);
+				ImGuiMCP::SetItemTooltip(T("$LZC_CookpotTip", "Place a cooking pot over the fire. Without it, stews and soups can't be cooked at the camp fire. Takes effect at the next camp."));
 				changed |= ImGuiMCP::Checkbox(T("$LZC_FirewoodMechanic", "Firewood mechanic"), &values.firewoodMechanic);
 				ImGuiMCP::SetItemTooltip(T("$LZC_FirewoodMechanicTip", "The fire starts out unlit: activate it with firewood to light it. Takes effect at the next camp."));
 				ImGuiMCP::BeginDisabled(!values.firewoodMechanic);
