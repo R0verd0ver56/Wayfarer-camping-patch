@@ -127,6 +127,35 @@ namespace CampLayout
 
 		using ScriptObjects::FormValue;
 
+		constexpr float kLanternReach = 100.0f;  // a lantern's light is the nearest Light within this
+
+		// The placed Light nearest a_lantern among a_refs (not the fire's light,
+		// a_skip), if within kLanternReach.
+		RE::TESObjectREFR* LanternLight(RE::TESObjectREFR* a_lantern, const std::vector<RE::TESObjectREFR*>& a_refs, const RE::TESObjectREFR* a_skip)
+		{
+			RE::TESObjectREFR* nearest = nullptr;
+			float              best = kLanternReach;
+			for (auto* ref : a_refs) {
+				auto* base = ref ? ref->GetBaseObject() : nullptr;
+				if (!base || ref == a_skip || !base->Is(RE::FormType::Light)) {
+					continue;
+				}
+				const float distance = ref->GetPosition().GetDistance(a_lantern->GetPosition());
+				if (distance <= best) {
+					best = distance;
+					nearest = ref;
+				}
+			}
+			return nearest;
+		}
+
+		bool IsLantern(const RE::TESObjectREFR* a_ref, const RE::BGSKeyword* a_keyword)
+		{
+			auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
+			auto* keywords = base ? base->As<RE::BGSKeywordForm>() : nullptr;
+			return a_keyword && keywords && keywords->HasKeyword(a_keyword);
+		}
+
 		class Properties
 		{
 		public:
@@ -1357,6 +1386,18 @@ namespace CampLayout
 			{
 				auto* campfire = a_refs[kCampfire];
 
+				// The tents' lanterns (any clutter with LZC_TentLanternKeyword)
+				// start unlit: the Light nearest each is switched off.
+				if (auto* lanternKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword")) {
+					for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
+						if (IsLantern(a_refs[i], lanternKeyword)) {
+							if (auto* light = LanternLight(a_refs[i], a_refs, a_refs[kLight])) {
+								light->Disable();
+							}
+						}
+					}
+				}
+
 				// The fire clutter's cooking pot, left out with PlaceCookpot off,
 				// and with it whatever in the clutter sets has the pot as its
 				// Linked Ref (a stew in it, say): those are left out by base.
@@ -1900,6 +1941,34 @@ namespace CampLayout
 		if (marker && !marker->IsDisabled()) {
 			ListMapMarker(marker);
 		}
+	}
+
+	bool ToggleLantern(RE::TESObjectREFR* a_lantern)
+	{
+		auto camp = a_lantern ? CampScript() : nullptr;
+		if (!camp) {
+			return false;
+		}
+		const Properties props(camp.get());
+		if (!IsLantern(a_lantern, props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword"))) {
+			return false;
+		}
+		const auto* placedValue = camp->GetVariable("placedRefs");
+		const auto  placed = placedValue && placedValue->IsArray() ? placedValue->GetArray() : nullptr;
+		std::vector<RE::TESObjectREFR*> refs;
+		for (std::size_t i = 0; placed && i < placed->size(); ++i) {
+			auto* form = FormValue(&(*placed)[i]);
+			refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
+		}
+		const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
+		if (auto* light = LanternLight(a_lantern, refs, fireLight)) {
+			if (light->IsDisabled()) {
+				light->Enable(false);
+			} else {
+				light->Disable();
+			}
+		}
+		return true;
 	}
 
 	bool UnrollKit(RE::TESObjectREFR* a_kit)

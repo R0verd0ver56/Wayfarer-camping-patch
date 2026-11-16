@@ -110,6 +110,10 @@ It moves onto the fire while the fire is lit, so looking
 at the fire shows "Cook".}
 Light Property LZC_CampfireLight Auto
 {Optional. Flickering firelight placed above the campfire.}
+Keyword Property LZC_TentLanternKeyword Auto
+{Optional. Marks the tents' lanterns (activators in the tent clutter sets,
+Wayfarer's or an addon's): each starts unlit, and activating it switches the
+Light nearest it (within 100 units, also in the set) on and off.}
 Light Property LZC_CampfireLightShadow Auto
 {Optional: LZC_CampfireLight's twin that casts shadows (a copy of it with Type
 Shadow Omnidirectional), used with CampfireLightShadows.}

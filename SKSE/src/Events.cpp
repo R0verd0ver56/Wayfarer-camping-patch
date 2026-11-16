@@ -60,6 +60,11 @@ namespace Events
 		public:
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event, RE::BSTEventSource<RE::TESActivateEvent>*) override
 			{
+				// A camp lantern (from any plugin: addon tents have their own).
+				if (a_event && a_event->objectActivated && a_event->actionRef && a_event->actionRef->IsPlayerRef() &&
+					CampLayout::ToggleLantern(a_event->objectActivated.get())) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
 				if (a_event && a_event->objectActivated && a_event->actionRef && a_event->actionRef->IsPlayerRef() &&
 					FromPlugin(a_event->objectActivated->GetBaseObject())) {
 					RE::TESObjectREFR* target = a_event->objectActivated.get();
