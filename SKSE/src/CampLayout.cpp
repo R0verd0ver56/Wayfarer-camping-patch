@@ -1436,9 +1436,25 @@ namespace CampLayout
 				// model and the light are off.
 				if (auto* lanternKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword")) {
 					auto* litKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
+					const bool place = _props.Bool("PlaceTentLanterns", true);
 					for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
-						if (IsLantern(a_refs[i], lanternKeyword)) {
-							SetLanternLit(FindLanternParts(a_refs[i], a_refs, a_refs[kLight], lanternKeyword, litKeyword), false);
+						if (!IsLantern(a_refs[i], lanternKeyword)) {
+							continue;
+						}
+						const auto parts = FindLanternParts(a_refs[i], a_refs, a_refs[kLight], lanternKeyword, litKeyword);
+						if (place) {
+							SetLanternLit(parts, false);
+							continue;
+						}
+						// Lanterns off (SKSE menu): the lantern, its lit model and its
+						// light are left out.
+						for (auto* piece : { parts.unlit, parts.lit, parts.light }) {
+							if (!piece) {
+								continue;
+							}
+							piece->Disable();
+							piece->SetDelete(true);
+							std::ranges::replace(a_refs, piece, static_cast<RE::TESObjectREFR*>(nullptr));
 						}
 					}
 				}

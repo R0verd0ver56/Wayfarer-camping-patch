@@ -46,6 +46,7 @@ namespace Menu
 			int          lightLevel{ 3 };  // the slider: 0 off (Light Placer), 1 dim, 2 medium, 3 bright
 			bool         lightShadows{ false };
 			bool         placeCookpot{ true };
+			bool         placeLanterns{ true };
 		};
 
 		constexpr std::pair<std::string_view, const char*> kBedrollStyles[] = {
@@ -130,7 +131,8 @@ namespace Menu
 			auto*  lightLevel = object ? AutoProperty(object.get(), "CampfireLightLevel") : nullptr;
 			auto*  lightShadows = object ? AutoProperty(object.get(), "CampfireLightShadows") : nullptr;
 			auto*  cookpot = object ? AutoProperty(object.get(), "PlaceCookpot") : nullptr;
-			const bool found = firewood && burnHours && block && grass && light && tub && tubInTent && slope && seat && bedroll && merchants && perFire && mapMarker && rolled && campfire && fireSeats && fade && fireOutside && tentCollision && lightLevel && lightShadows && cookpot;
+			auto*  lanterns = object ? AutoProperty(object.get(), "PlaceTentLanterns") : nullptr;
+			const bool found = firewood && burnHours && block && grass && light && tub && tubInTent && slope && seat && bedroll && merchants && perFire && mapMarker && rolled && campfire && fireSeats && fade && fireOutside && tentCollision && lightLevel && lightShadows && cookpot && lanterns;
 			if (found) {
 				auto* dataHandler = RE::TESDataHandler::GetSingleton();
 				values = { firewood->GetBool(), burnHours->GetFloat(), block->GetBool(), grass->GetBool(), light->GetBool(), tub->GetBool(),
@@ -138,7 +140,7 @@ namespace Menu
 					PluginLoaded(kBedrollAltPlugin),
 					merchants->GetBool(), perFire->GetSInt(), mapMarker->GetBool(), rolled->GetBool(), campfire->GetBool(), fireSeats->GetBool(), fade->GetBool(),
 					PluginLoaded(kAshNomadBedrollsPlugin), fireOutside->GetBool(), tentCollision->GetBool(),
-					SliderLevel(light->GetBool(), lightLevel->GetSInt()), lightShadows->GetBool(), cookpot->GetBool() };
+					SliderLevel(light->GetBool(), lightLevel->GetSInt()), lightShadows->GetBool(), cookpot->GetBool(), lanterns->GetBool() };
 			}
 
 			std::scoped_lock guard(lock);
@@ -169,6 +171,9 @@ namespace Menu
 				}
 				if (auto* light = AutoProperty(object.get(), "PlaceCampfireLight")) {
 					light->SetBool(a_values.lightLevel > 0);
+				}
+				if (auto* lanterns = AutoProperty(object.get(), "PlaceTentLanterns")) {
+					lanterns->SetBool(a_values.placeLanterns);
 				}
 				if (auto* cookpot = AutoProperty(object.get(), "PlaceCookpot")) {
 					cookpot->SetBool(a_values.placeCookpot);
@@ -266,6 +271,8 @@ namespace Menu
 				ImGuiMCP::SetItemTooltip(T("$LZC_FadeToBlackDuringSetupTip", "Fade the screen to black while the camp goes up or is packed up, and back in once it's done."));
 				changed |= ImGuiMCP::Checkbox(T("$LZC_TentCollision", "Tent collision"), &values.tentCollision);
 				ImGuiMCP::SetItemTooltip(T("$LZC_TentCollisionTip", "Turn off to let you and your followers walk through the tents' walls. Applies to a camp that's already up too."));
+				changed |= ImGuiMCP::Checkbox(T("$LZC_TentLanterns", "Tent lanterns"), &values.placeLanterns);
+				ImGuiMCP::SetItemTooltip(T("$LZC_TentLanternsTip", "Place lanterns in the tents, unlit; activate one to light it. Takes effect at the next camp."));
 				changed |= ImGuiMCP::Checkbox(T("$LZC_MapMarker", "Map marker"), &values.placeMapMarker);
 				ImGuiMCP::SetItemTooltip(T("$LZC_MapMarkerTip", "Show the camp on the world map while it's up, for fast travel. Takes effect at the next camp."));
 				changed |= ImGuiMCP::Checkbox(T("$LZC_Bathtub", "Bathtub"), &values.placeTub);
