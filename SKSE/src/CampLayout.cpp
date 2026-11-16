@@ -129,15 +129,17 @@ namespace CampLayout
 
 		constexpr float kLanternReach = 100.0f;  // a lantern's light is the nearest Light within this
 
-		// The placed Light nearest a_lantern among a_refs (not the fire's light,
-		// a_skip), if within kLanternReach.
-		RE::TESObjectREFR* LanternLight(RE::TESObjectREFR* a_lantern, const std::vector<RE::TESObjectREFR*>& a_refs, const RE::TESObjectREFR* a_skip)
+		bool IsLantern(const RE::TESObjectREFR* a_ref, const RE::BGSKeyword* a_keyword);
+
+		// Among a_refs, the one nearest a_lantern (not a_skip, the fire's light)
+		// that a_match accepts, if within kLanternReach.
+		template <class Match>
+		RE::TESObjectREFR* NearLantern(RE::TESObjectREFR* a_lantern, const std::vector<RE::TESObjectREFR*>& a_refs, const RE::TESObjectREFR* a_skip, Match a_match)
 		{
 			RE::TESObjectREFR* nearest = nullptr;
 			float              best = kLanternReach;
 			for (auto* ref : a_refs) {
-				auto* base = ref ? ref->GetBaseObject() : nullptr;
-				if (!base || ref == a_skip || !base->Is(RE::FormType::Light)) {
+				if (!ref || ref == a_skip || ref == a_lantern || !a_match(ref)) {
 					continue;
 				}
 				const float distance = ref->GetPosition().GetDistance(a_lantern->GetPosition());
@@ -147,6 +149,50 @@ namespace CampLayout
 				}
 			}
 			return nearest;
+		}
+
+		// A lantern's pieces: its unlit and lit models (LZC_TentLanternKeyword,
+		// LZC_TentLanternLitKeyword) and its Light, found around a_lantern
+		// (either model).
+		struct LanternParts
+		{
+			RE::TESObjectREFR* unlit{ nullptr };
+			RE::TESObjectREFR* lit{ nullptr };
+			RE::TESObjectREFR* light{ nullptr };
+		};
+
+		LanternParts FindLanternParts(RE::TESObjectREFR* a_lantern, const std::vector<RE::TESObjectREFR*>& a_refs, const RE::TESObjectREFR* a_skip,
+			const RE::BGSKeyword* a_unlitKeyword, const RE::BGSKeyword* a_litKeyword)
+		{
+			LanternParts parts;
+			if (IsLantern(a_lantern, a_unlitKeyword)) {
+				parts.unlit = a_lantern;
+				parts.lit = NearLantern(a_lantern, a_refs, a_skip, [&](auto* a_ref) { return IsLantern(a_ref, a_litKeyword); });
+			} else if (IsLantern(a_lantern, a_litKeyword)) {
+				parts.lit = a_lantern;
+				parts.unlit = NearLantern(a_lantern, a_refs, a_skip, [&](auto* a_ref) { return IsLantern(a_ref, a_unlitKeyword); });
+			} else {
+				return parts;
+			}
+			parts.light = NearLantern(a_lantern, a_refs, a_skip, [](auto* a_ref) {
+				auto* base = a_ref->GetBaseObject();
+				return base && base->Is(RE::FormType::Light);
+			});
+			return parts;
+		}
+
+		void SetLanternLit(const LanternParts& a_parts, bool a_lit)
+		{
+			for (auto* on : { a_lit ? a_parts.lit : a_parts.unlit, a_lit ? a_parts.light : nullptr }) {
+				if (on) {
+					on->Enable(false);
+				}
+			}
+			for (auto* off : { a_lit ? a_parts.unlit : a_parts.lit, a_lit ? nullptr : a_parts.light }) {
+				if (off) {
+					off->Disable();
+				}
+			}
 		}
 
 		bool IsLantern(const RE::TESObjectREFR* a_ref, const RE::BGSKeyword* a_keyword)
@@ -1386,14 +1432,13 @@ namespace CampLayout
 			{
 				auto* campfire = a_refs[kCampfire];
 
-				// The tents' lanterns (any clutter with LZC_TentLanternKeyword)
-				// start unlit: the Light nearest each is switched off.
+				// The tents' lanterns start unlit: the unlit model shows, the lit
+				// model and the light are off.
 				if (auto* lanternKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword")) {
+					auto* litKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
 					for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
 						if (IsLantern(a_refs[i], lanternKeyword)) {
-							if (auto* light = LanternLight(a_refs[i], a_refs, a_refs[kLight])) {
-								light->Disable();
-							}
+							SetLanternLit(FindLanternParts(a_refs[i], a_refs, a_refs[kLight], lanternKeyword, litKeyword), false);
 						}
 					}
 				}
@@ -1950,7 +1995,9 @@ namespace CampLayout
 			return false;
 		}
 		const Properties props(camp.get());
-		if (!IsLantern(a_lantern, props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword"))) {
+		auto*            unlitKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword");
+		auto*            litKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
+		if (!IsLantern(a_lantern, unlitKeyword) && !IsLantern(a_lantern, litKeyword)) {
 			return false;
 		}
 		const auto* placedValue = camp->GetVariable("placedRefs");
@@ -1961,13 +2008,11 @@ namespace CampLayout
 			refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
 		}
 		const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
-		if (auto* light = LanternLight(a_lantern, refs, fireLight)) {
-			if (light->IsDisabled()) {
-				light->Enable(false);
-			} else {
-				light->Disable();
-			}
-		}
+		const auto  parts = FindLanternParts(a_lantern, refs, fireLight, unlitKeyword, litKeyword);
+		// Activating the unlit model lights it; the lit one puts it out. With
+		// no lit model, the light alone switches.
+		const bool lighting = parts.lit ? a_lantern != parts.lit : (parts.light && parts.light->IsDisabled());
+		SetLanternLit(parts, lighting);
 		return true;
 	}
 
