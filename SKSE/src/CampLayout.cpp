@@ -1393,10 +1393,19 @@ namespace CampLayout
 			{
 				auto* campfire = a_refs[kCampfire];
 
-				// The fire clutter's cooking pot, left out with PlaceCookpot off.
+				// The fire clutter's cooking pot, left out with PlaceCookpot off,
+				// and with it whatever in the clutter sets has the pot as its
+				// Linked Ref (a stew in it, say): those are left out by base.
 				if (auto* cookpot = _props.Form<RE::TESForm>("LZC_CampCookpot"); cookpot && !_props.Bool("PlaceCookpot", true)) {
+					std::set<const RE::TESForm*> potBases{ cookpot };
+					for (auto* item : _layout.setItems) {
+						auto* linked = item ? item->GetLinkedRef(nullptr) : nullptr;
+						if (linked && linked->GetBaseObject() == cookpot && item->GetBaseObject()) {
+							potBases.insert(item->GetBaseObject());
+						}
+					}
 					for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
-						if (auto* ref = a_refs[i]; ref && ref->GetBaseObject() == cookpot) {
+						if (auto* ref = a_refs[i]; ref && potBases.contains(ref->GetBaseObject())) {
 							ref->Disable();
 							ref->SetDelete(true);
 							a_refs[i] = nullptr;
