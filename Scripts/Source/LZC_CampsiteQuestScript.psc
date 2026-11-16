@@ -624,13 +624,15 @@ Bool Function StrikeStones(ObjectReference akFire)
 	strikeSeat = akFire.PlaceAtMe(LZC_FireLightingMarker)
 	Utility.Wait(0.2)
 	strikeSeat.Activate(PlayerRef)
+	; Up to six seconds to walk over and crouch down.
 	Int tries = 0
-	While !strikeSeat.IsFurnitureInUse() && tries < 10
+	While !strikeSeat.IsFurnitureInUse() && tries < 30
 		tries += 1
 		Utility.Wait(0.2)
 	EndWhile
 	If !strikeSeat.IsFurnitureInUse()
 		FinishStriking()
+		Debug.Notification(Tr("$LZC_MsgCantStrike", "You couldn't get into position to light the fire."))
 		Return False
 	EndIf
 	Game.DisablePlayerControls(True, True, True, False, True, False, False, False)
