@@ -1396,7 +1396,12 @@ namespace CampLayout
 				// The fire clutter's cooking pot, left out with PlaceCookpot off,
 				// and with it whatever in the clutter sets has the pot as its
 				// Linked Ref (a stew in it, say): those are left out by base.
-				if (auto* cookpot = _props.Form<RE::TESForm>("LZC_CampCookpot"); cookpot && !_props.Bool("PlaceCookpot", true)) {
+				// (LZC_CampCookpot is the pot reference in the holding cell; a base
+				// object works too.)
+				auto* cookpotForm = _props.Form<RE::TESForm>("LZC_CampCookpot");
+				auto* cookpotRef = cookpotForm ? cookpotForm->As<RE::TESObjectREFR>() : nullptr;
+				auto* cookpot = cookpotRef ? cookpotRef->GetBaseObject() : cookpotForm;
+				if (cookpot && !_props.Bool("PlaceCookpot", true)) {
 					std::set<const RE::TESForm*> potBases{ cookpot };
 					for (auto* item : _layout.setItems) {
 						auto* linked = item ? item->GetLinkedRef(nullptr) : nullptr;
