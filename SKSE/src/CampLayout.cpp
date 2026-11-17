@@ -977,7 +977,7 @@ namespace CampLayout
 					Set(kCampfire, RE::TESForm::LookupByID(kXMarker), kSeatRadius, 0.0f, 0.0f);
 					return;
 				}
-				Set(kCampfire, _props.Form<RE::TESForm>("LZC_CampfirePlaced"), kSeatRadius, 0.0f, 0.0f);
+				Set(kCampfire, CampfireForm(_props), kSeatRadius, 0.0f, 0.0f);
 				// One of the two fire clutter sets, at random, if there's a second.
 				std::int32_t fireSet = 1;
 				if (_props.Form<RE::TESObjectREFR>("LZC_FireClutterAnchor2") && !_props.Forms<RE::TESObjectREFR>("LZC_FireClutter2").empty()) {
@@ -1746,6 +1746,16 @@ namespace CampLayout
 			return actors;
 		}
 
+		// The burning campfire: LZC_CampfireBurning (a MovableStatic of the
+		// plugin's own) if set, else LZC_CampfirePlaced (the vanilla one).
+		RE::TESForm* CampfireForm(const Properties& a_props)
+		{
+			if (auto* custom = a_props.Form<RE::TESForm>("LZC_CampfireBurning")) {
+				return custom;
+			}
+			return a_props.Form<RE::TESForm>("LZC_CampfirePlaced");
+		}
+
 		std::vector<RE::ObjectRefHandle> newTents;  // placed by the last BuildCamp
 
 		// With TentCollision off: the tent's loaded 3D stops colliding. It
@@ -1980,7 +1990,7 @@ namespace CampLayout
 			// vanilla one) goes on every form list the vanilla campfire is on,
 			// so Campfire and Frostfall count it as a fire and a heat source.
 			constexpr RE::FormID kVanillaCampfire = 0x035F49;  // Skyrim.esm
-			auto*                fire = props.Form<RE::TESForm>("LZC_CampfirePlaced");
+			auto*                fire = CampfireForm(props);
 			auto*                vanillaFire = RE::TESForm::LookupByID(kVanillaCampfire);
 			if (fire && vanillaFire && fire != vanillaFire) {
 				std::uint32_t added = 0;
