@@ -2103,9 +2103,10 @@ namespace CampLayout
 		}
 		const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
 		const auto  parts = FindLanternParts(a_lantern, refs, fireLight, unlitKeyword, litKeyword);
-		// Activating the unlit model lights it; the lit one puts it out. With
-		// no lit model, the light alone switches.
-		const bool lighting = parts.lit ? a_lantern != parts.lit : (parts.light && parts.light->IsDisabled());
+		// Both models are there (one hidden), so the light says which way to
+		// go: off, it's lit; on, it's put out. Without a light, the model
+		// activated decides.
+		const bool lighting = parts.light ? parts.light->IsDisabled() : (parts.lit && a_lantern != parts.lit);
 		SetLanternLit(parts, lighting);
 		return true;
 	}
