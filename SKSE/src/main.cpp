@@ -61,6 +61,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		}
 	});
 
-	logger::info("Wayfarer - A Convenient Camping Framework loaded");
+	logger::info("Wayfarer - A Convenient Camping Framework loaded (LazyCamping.dll built " __DATE__ " " __TIME__ " UTC)");
 	return true;
 }

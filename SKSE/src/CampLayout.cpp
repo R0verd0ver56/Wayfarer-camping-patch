@@ -196,11 +196,13 @@ namespace CampLayout
 				if (model->IsDisabled()) {
 					model->Enable(false);
 				}
-				auto* root = model->Get3D();
+				auto*      root = model->Get3D();
+				const bool hide = model == (a_lit ? a_parts.unlit : a_parts.lit) && a_parts.lit && a_parts.unlit;
+				logger::info("Lantern model {:08X}: {} ({}){}", model->GetFormID(), hide ? "hidden" : "shown", a_lit ? "lit" : "unlit",
+					root ? "" : ", 3D not loaded yet");
 				if (!root) {
 					continue;
 				}
-				const bool hide = model == (a_lit ? a_parts.unlit : a_parts.lit) && a_parts.lit && a_parts.unlit;
 				const auto layer = root->GetCollisionLayer();
 				if (layer != RE::COL_LAYER::kNonCollidable && layer != RE::COL_LAYER::kUnidentified) {
 					lanternLayers[model->GetFormID()] = layer;
