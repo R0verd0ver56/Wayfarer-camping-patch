@@ -1506,7 +1506,7 @@ namespace CampLayout
 				auto* cookpotForm = _props.Form<RE::TESForm>("LZC_CampCookpot");
 				auto* cookpotRef = cookpotForm ? cookpotForm->As<RE::TESObjectREFR>() : nullptr;
 				auto* cookpot = cookpotRef ? cookpotRef->GetBaseObject() : cookpotForm;
-				if (cookpot && !_props.Bool("PlaceCookpot", true)) {
+				if (cookpot && !_props.Bool("PlaceCookpot", false)) {
 					std::set<const RE::TESForm*> potBases{ cookpot };
 					for (auto* item : _layout.setItems) {
 						auto* linked = item ? item->GetLinkedRef(nullptr) : nullptr;

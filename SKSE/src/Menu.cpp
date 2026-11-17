@@ -45,7 +45,7 @@ namespace Menu
 			bool         tentCollision{ true };
 			int          lightLevel{ 3 };  // the slider: 0 off (Light Placer), 1 dim, 2 medium, 3 bright
 			bool         lightShadows{ false };
-			bool         placeCookpot{ true };
+			bool         placeCookpot{ false };
 			bool         placeLanterns{ true };
 		};
 

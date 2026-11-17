@@ -43,7 +43,7 @@ ObjectReference Property LZC_CampCookpot Auto
 {Optional. The cooking pot in a fire clutter set in the holding cell (any copy:
 its base object is what counts). With PlaceCookpot off, every copy of it is
 left out of the camp, and so are the stews.}
-Bool Property PlaceCookpot = True Auto
+Bool Property PlaceCookpot = False Auto
 {The fire clutter's cooking pot (SKSE menu). Without a cooking pot, the camp
 fire's Cook menu leaves out stews and soups (recipes needing two or more
 different ingredients, salt aside).}
