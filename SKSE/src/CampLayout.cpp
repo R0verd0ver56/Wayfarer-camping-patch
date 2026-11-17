@@ -1976,6 +1976,22 @@ namespace CampLayout
 					}
 				}
 			}
+			// A campfire of the plugin's own (LZC_CampfirePlaced, if not the
+			// vanilla one) goes on every form list the vanilla campfire is on,
+			// so Campfire and Frostfall count it as a fire and a heat source.
+			constexpr RE::FormID kVanillaCampfire = 0x035F49;  // Skyrim.esm
+			auto*                fire = props.Form<RE::TESForm>("LZC_CampfirePlaced");
+			auto*                vanillaFire = RE::TESForm::LookupByID(kVanillaCampfire);
+			if (fire && vanillaFire && fire != vanillaFire) {
+				std::uint32_t added = 0;
+				for (auto* list : dataHandler->GetFormArray<RE::BGSListForm>()) {
+					if (list && list->HasForm(vanillaFire) && !list->HasForm(fire)) {
+						list->forms.push_back(fire);
+						++added;
+					}
+				}
+				logger::info("Campfire: the camp's own campfire ({:08X}) added to {} form list(s) alongside the vanilla one", fire->GetFormID(), added);
+			}
 		}
 		campfireTent = {};
 
