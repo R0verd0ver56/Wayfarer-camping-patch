@@ -184,6 +184,9 @@ namespace CampLayout
 		// Shows the lit or the unlit model. Both stay enabled, the other just
 		// hidden: enabling and disabling would fade them in and out. (Hiding
 		// lasts until the 3D next loads; OnObjectLoaded hides it again.)
+		// Each lantern model's own collision layer, seen while it was shown.
+		std::map<RE::FormID, RE::COL_LAYER> lanternLayers;
+
 		void ShowLanternModel(const LanternParts& a_parts, bool a_lit)
 		{
 			for (auto* model : { a_parts.unlit, a_parts.lit }) {
@@ -193,8 +196,21 @@ namespace CampLayout
 				if (model->IsDisabled()) {
 					model->Enable(false);
 				}
-				if (auto* root = model->Get3D()) {
-					root->SetAppCulled(model == (a_lit ? a_parts.unlit : a_parts.lit) && a_parts.lit && a_parts.unlit);
+				auto* root = model->Get3D();
+				if (!root) {
+					continue;
+				}
+				const bool hide = model == (a_lit ? a_parts.unlit : a_parts.lit) && a_parts.lit && a_parts.unlit;
+				const auto layer = root->GetCollisionLayer();
+				if (layer != RE::COL_LAYER::kNonCollidable && layer != RE::COL_LAYER::kUnidentified) {
+					lanternLayers[model->GetFormID()] = layer;
+				}
+				root->SetAppCulled(hide);
+				// The hidden one can't be aimed at either.
+				if (hide) {
+					root->SetCollisionLayer(RE::COL_LAYER::kNonCollidable);
+				} else if (const auto own = lanternLayers.find(model->GetFormID()); own != lanternLayers.end() && layer != own->second) {
+					root->SetCollisionLayer(own->second);
 				}
 			}
 		}
