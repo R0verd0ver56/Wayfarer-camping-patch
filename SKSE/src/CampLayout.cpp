@@ -528,6 +528,12 @@ namespace CampLayout
 				_layout.turn.assign(kSlotCount, 0.0f);
 				_layout.maxTilt.assign(kSlotCount, -1.0f);
 				_layout.tiltClutter.assign(kSlotCount, false);
+				// The tents' clutter (lanterns, the backpack) keeps its place on a
+				// tent tilted to the slope, upright.
+				_layout.followTilt.assign(kSlotCount, false);
+				for (std::size_t t = 0; t < static_cast<std::size_t>(kMaxTents); ++t) {
+					_layout.followTilt[kFirstTent + t] = true;
+				}
 				_layout.clutterSet.assign(kSlotCount, 0);
 				_layout.alignToSlope = a_props.Bool("AlignToSlope", true);
 				_layout.maxTiltDegrees = kMaxTilt;

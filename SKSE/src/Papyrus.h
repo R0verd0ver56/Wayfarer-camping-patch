@@ -45,6 +45,7 @@ namespace Papyrus
 			std::vector<float>              maxTilt;     // per object, degrees; below 0 for maxTiltDegrees, 0 stands level
 			std::vector<std::int32_t>       clutterSet;  // 1-based clutter set per object, 0 for none
 			std::vector<bool>               tiltClutter; // clutter tilts with its object, not level
+			std::vector<bool>               followTilt;  // clutter stays put on its tilted object, but upright
 			std::vector<RE::TESObjectREFR*> setAnchors;
 			std::vector<RE::TESObjectREFR*> setItems;
 			std::vector<std::int32_t>       itemSet;  // 1-based set of each item

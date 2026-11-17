@@ -249,6 +249,7 @@ namespace Papyrus
 			const auto&       a_maxTilt = a_layout.maxTilt;
 			const auto&       a_clutterSet = a_layout.clutterSet;
 			const auto&       a_tiltClutter = a_layout.tiltClutter;
+			const auto&       a_followTilt = a_layout.followTilt;
 			const auto&       a_setAnchors = a_layout.setAnchors;
 			const auto&       a_setItems = a_layout.setItems;
 			const auto&       a_itemSet = a_layout.itemSet;
@@ -310,8 +311,14 @@ namespace Papyrus
 				// anchor in the holding cell. It stands level, whatever the
 				// ground does, unless marked in `tiltClutter`: then it tilts with
 				// the object.
+				// With `followTilt`, its position follows the object's tilt (so it
+				// stays where it is on a tent, a lantern by the ridge pole, say),
+				// while it stays upright.
 				const bool          tilt = i < a_tiltClutter.size() && a_tiltClutter[i];
-				const RE::NiMatrix3 frame = tilt ? tiltFrame : Placement::MatrixFromAngles({ 0.0f, 0.0f, yaw });
+				const bool          follow = i < a_followTilt.size() && a_followTilt[i];
+				const RE::NiMatrix3 level = Placement::MatrixFromAngles({ 0.0f, 0.0f, yaw });
+				const RE::NiMatrix3 frame = tilt ? tiltFrame : level;
+				const RE::NiMatrix3 placeFrame = tilt || follow ? tiltFrame : level;
 
 				for (std::size_t j = 0; j < a_setItems.size(); ++j) {
 					auto* item = a_setItems[j];
@@ -336,7 +343,7 @@ namespace Papyrus
 					clutter.base = itemBase;
 					clutter.scale = item->GetReferenceRuntimeData().refScale;
 					clutter.owner = static_cast<std::int32_t>(i);
-					clutter.position = ref.position + frame * local;
+					clutter.position = ref.position + placeFrame * local;
 					clutter.angles = Placement::AnglesFromMatrix(frame * relative);
 					if (isStorage) {
 						if (!storageFound) {
