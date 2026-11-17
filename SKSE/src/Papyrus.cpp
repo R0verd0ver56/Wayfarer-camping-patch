@@ -349,7 +349,7 @@ namespace Papyrus
 					// from the ridge pole) turns upright about its top, where it
 					// hangs, rather than its origin, so it stays hooked on.
 					if (follow && !tilt && local.z > kHangingHeight) {
-						const float        top = itemBase->boundData.boundMax.z * clutter.scale;
+						const float        top = itemBase->boundData.boundMax.z * static_cast<float>(clutter.scale) / 100.0f;  // scale is a percentage
 						const RE::NiPoint3 hook = relative * RE::NiPoint3{ 0.0f, 0.0f, top };
 						clutter.position += tiltFrame * hook - level * hook;
 					}
