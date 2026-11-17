@@ -1827,6 +1827,8 @@ namespace CampLayout
 		std::vector<RE::ObjectRefHandle> newTents;  // placed by the last BuildCamp
 		std::vector<RE::ObjectRefHandle> lastPlaced;  // everything the last BuildCamp placed
 
+		void RefreshLanterns();
+
 		// With TentCollision off: the tent's loaded 3D stops colliding. It
 		// collides again when its 3D next loads without this.
 		void RemoveCollision(RE::TESObjectREFR* a_tent)
@@ -1860,6 +1862,14 @@ namespace CampLayout
 			for (auto* ref : refs) {
 				lastPlaced.push_back(ref ? ref->GetHandle() : RE::ObjectRefHandle());
 			}
+			// Lanterns whose 3D loaded while the camp was being built: hide
+			// their unused models once things have settled.
+			std::thread([] {
+				for (const auto delay : { 500ms, 2000ms }) {
+					std::this_thread::sleep_for(delay);
+					SKSE::GetTaskInterface()->AddTask(RefreshLanterns);
+				}
+			}).detach();
 			// Until the script stores them in placedRefs, the new tents are
 			// known only here.
 			newTents.clear();
@@ -1914,6 +1924,31 @@ namespace CampLayout
 				}
 			}
 			return refs;
+		}
+
+		// Shows each of the camp's lanterns as its light says (lit or not).
+		void RefreshLanterns()
+		{
+			auto camp = CampScript();
+			if (!camp) {
+				return;
+			}
+			const Properties props(camp.get());
+			auto*            unlitKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword");
+			auto*            litKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
+			if (!unlitKeyword) {
+				return;
+			}
+			const auto  refs = CampRefs(camp.get());
+			const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
+			for (auto* ref : refs) {
+				if (IsLantern(ref, unlitKeyword)) {
+					const auto parts = FindLanternParts(ref, refs, fireLight, unlitKeyword, litKeyword);
+					if (parts.light) {
+						ShowLanternModel(parts, !parts.light->IsDisabled());
+					}
+				}
+			}
 		}
 
 		// Unrolls camp bedroll a_bed (0 to kMaxBedrolls - 1) if it's still

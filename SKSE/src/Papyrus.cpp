@@ -345,13 +345,11 @@ namespace Papyrus
 					clutter.scale = item->GetReferenceRuntimeData().refScale;
 					clutter.owner = static_cast<std::int32_t>(i);
 					clutter.position = ref.position + placeFrame * local;
-					// Following the tilt upright, an item hanging high up (a lantern
-					// from the ridge pole) turns upright about its top, where it
-					// hangs, rather than its origin, so it stays hooked on.
+					// Following the tilt, an item hanging high up (a lantern from the
+					// ridge pole) tilts with its object too, fixed to it like part
+					// of its model, so it can't drift off its hook.
 					if (follow && !tilt && local.z > kHangingHeight) {
-						const float        top = itemBase->boundData.boundMax.z * static_cast<float>(clutter.scale) / 100.0f;  // scale is a percentage
-						const RE::NiPoint3 hook = relative * RE::NiPoint3{ 0.0f, 0.0f, top };
-						clutter.position += tiltFrame * hook - level * hook;
+						clutter.angles = Placement::AnglesFromMatrix(tiltFrame * relative);
 					}
 					clutter.angles = Placement::AnglesFromMatrix(frame * relative);
 					if (isStorage) {
