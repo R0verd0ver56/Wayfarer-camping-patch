@@ -60,6 +60,25 @@ namespace Events
 		public:
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event, RE::BSTEventSource<RE::TESActivateEvent>*) override
 			{
+				// The camp's backpack activator (LZC_CampStorageActivator) opens the
+				// storage, LZC_CampStorage, which stays in the holding cell.
+				if (a_event && a_event->objectActivated && a_event->actionRef && a_event->actionRef->IsPlayerRef()) {
+					auto  camp = CampScript();
+					auto* backpack = Property(camp, "LZC_CampStorageActivator");
+					auto* storageForm = Property(camp, "LZC_CampStorage");
+					auto* storage = storageForm ? storageForm->As<RE::TESObjectREFR>() : nullptr;
+					if (backpack && storage && a_event->objectActivated->GetBaseObject() == backpack) {
+						const auto handle = storage->GetHandle();
+						SKSE::GetTaskInterface()->AddTask([handle] {
+							auto  ref = handle.get();
+							auto* player = RE::PlayerCharacter::GetSingleton();
+							if (ref && player) {
+								ref->ActivateRef(player, 0, nullptr, 1, false);
+							}
+						});
+						return RE::BSEventNotifyControl::kContinue;
+					}
+				}
 				// A camp lantern (from any plugin: addon tents have their own).
 				if (a_event && a_event->objectActivated && a_event->actionRef && a_event->actionRef->IsPlayerRef() &&
 					CampLayout::ToggleLantern(a_event->objectActivated.get())) {

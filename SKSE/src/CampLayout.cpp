@@ -1648,7 +1648,12 @@ namespace CampLayout
 				RE::TESObjectREFR* storage = nullptr;
 				if (auto* spot = a_refs[kSlotCount]) {
 					if (storageRef) {
-						storage = PlaceFresh(storageRef->GetBaseObject(), spot, "storage backpack");
+						// LZC_CampStorageActivator, if set (an Activator with the
+						// backpack's model), in place of a copy of the container:
+						// QuickLoot takes over containers and shows nothing for the
+						// empty copy, prompt included.
+						auto* activator = _props.Form<RE::TESBoundObject>("LZC_CampStorageActivator");
+						storage = PlaceFresh(activator ? activator : storageRef->GetBaseObject(), spot, "storage backpack");
 						if (storage) {
 							a_refs.push_back(storage);  // opens the real storage: see Events.cpp
 						}

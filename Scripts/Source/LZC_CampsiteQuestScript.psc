@@ -229,6 +229,11 @@ ObjectReference Property LZC_TubClutterAnchor Auto
 clothes basket and seats inside.}
 ObjectReference[] Property LZC_TubClutter Auto
 
+Activator Property LZC_CampStorageActivator Auto
+{Optional. An Activator with the backpack's model (name Backpack, activate
+text Open): the camp places it instead of a copy of the storage container,
+and activating it opens LZC_CampStorage. Use it with QuickLoot, which shows
+nothing, not even the prompt, for the container copy (it's empty).}
 ObjectReference Property LZC_CampStorage Auto
 {Optional. A persistent, non-respawning, unowned container kept in the
 holding cell. It's moved to the camp while one is up, so its contents carry
