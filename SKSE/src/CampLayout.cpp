@@ -1825,6 +1825,7 @@ namespace CampLayout
 		}
 
 		std::vector<RE::ObjectRefHandle> newTents;  // placed by the last BuildCamp
+		std::vector<RE::ObjectRefHandle> lastPlaced;  // everything the last BuildCamp placed
 
 		// With TentCollision off: the tent's loaded 3D stops colliding. It
 		// collides again when its 3D next loads without this.
@@ -1855,6 +1856,10 @@ namespace CampLayout
 			}
 			const Properties props(object.get());
 			auto refs = Builder(props, player, a_followers, a_partners, a_couples).Run();
+			lastPlaced.clear();
+			for (auto* ref : refs) {
+				lastPlaced.push_back(ref ? ref->GetHandle() : RE::ObjectRefHandle());
+			}
 			// Until the script stores them in placedRefs, the new tents are
 			// known only here.
 			newTents.clear();
@@ -1889,6 +1894,26 @@ namespace CampLayout
 				}
 			}
 			return tents;
+		}
+
+		// The camp's placed references: the script's placedRefs, or, before it
+		// has stored them (right after BuildCamp), what BuildCamp placed.
+		std::vector<RE::TESObjectREFR*> CampRefs(RE::BSScript::Object* a_camp)
+		{
+			std::vector<RE::TESObjectREFR*> refs;
+			const auto* placedValue = a_camp ? a_camp->GetVariable("placedRefs") : nullptr;
+			const auto  placed = placedValue && placedValue->IsArray() ? placedValue->GetArray() : nullptr;
+			for (std::size_t i = 0; placed && i < placed->size(); ++i) {
+				auto* form = FormValue(&(*placed)[i]);
+				refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
+			}
+			if (std::ranges::none_of(refs, [](auto* a_ref) { return a_ref != nullptr; })) {
+				refs.clear();
+				for (const auto& handle : lastPlaced) {
+					refs.push_back(handle.get().get());
+				}
+			}
+			return refs;
 		}
 
 		// Unrolls camp bedroll a_bed (0 to kMaxBedrolls - 1) if it's still
@@ -2110,13 +2135,7 @@ namespace CampLayout
 		if (!IsLantern(a_lantern, unlitKeyword) && !IsLantern(a_lantern, litKeyword)) {
 			return false;
 		}
-		const auto* placedValue = camp->GetVariable("placedRefs");
-		const auto  placed = placedValue && placedValue->IsArray() ? placedValue->GetArray() : nullptr;
-		std::vector<RE::TESObjectREFR*> refs;
-		for (std::size_t i = 0; placed && i < placed->size(); ++i) {
-			auto* form = FormValue(&(*placed)[i]);
-			refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
-		}
+		const auto  refs = CampRefs(camp.get());
 		const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
 		const auto  parts = FindLanternParts(a_lantern, refs, fireLight, unlitKeyword, litKeyword);
 		// Both models are there (one hidden), so the light says which way to
@@ -2150,13 +2169,7 @@ namespace CampLayout
 			auto*            unlitKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword");
 			auto*            litKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
 			if (IsLantern(a_ref, unlitKeyword) || IsLantern(a_ref, litKeyword)) {
-				const auto* placedValue = camp->GetVariable("placedRefs");
-				const auto  placed = placedValue && placedValue->IsArray() ? placedValue->GetArray() : nullptr;
-				std::vector<RE::TESObjectREFR*> refs;
-				for (std::size_t i = 0; placed && i < placed->size(); ++i) {
-					auto* form = FormValue(&(*placed)[i]);
-					refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
-				}
+				const auto  refs = CampRefs(camp.get());
 				const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
 				const auto  parts = FindLanternParts(a_ref, refs, fireLight, unlitKeyword, litKeyword);
 				if (parts.light) {

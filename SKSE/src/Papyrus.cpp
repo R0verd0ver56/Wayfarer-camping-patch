@@ -28,6 +28,7 @@ namespace Papyrus
 		// How far above/below the origin to look for ground.
 		constexpr float kSearchUp = 256.0f;
 		constexpr float kSearchDown = 1024.0f;
+		constexpr float kHangingHeight = 30.0f;  // clutter higher than this above its object's floor hangs from its top
 
 		// Result codes for the ground check (mirrored in LZC_CampsiteQuestScript).
 		using AreaResult = Camp::Result;
@@ -344,6 +345,14 @@ namespace Papyrus
 					clutter.scale = item->GetReferenceRuntimeData().refScale;
 					clutter.owner = static_cast<std::int32_t>(i);
 					clutter.position = ref.position + placeFrame * local;
+					// Following the tilt upright, an item hanging high up (a lantern
+					// from the ridge pole) turns upright about its top, where it
+					// hangs, rather than its origin, so it stays hooked on.
+					if (follow && !tilt && local.z > kHangingHeight) {
+						const float        top = itemBase->boundData.boundMax.z * clutter.scale;
+						const RE::NiPoint3 hook = relative * RE::NiPoint3{ 0.0f, 0.0f, top };
+						clutter.position += tiltFrame * hook - level * hook;
+					}
 					clutter.angles = Placement::AnglesFromMatrix(frame * relative);
 					if (isStorage) {
 						if (!storageFound) {
