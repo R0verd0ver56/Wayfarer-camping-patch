@@ -379,6 +379,8 @@ namespace CampLayout
 		// The burning campfire: the base of LZC_CampfireBurning (a reference
 		// to the plugin's own campfire in the holding cell) if set, else
 		// LZC_CampfirePlaced (the vanilla one).
+		// Failing that, the fire clutter anchor's own base, when it's the
+		// campfire itself rather than a marker.
 		RE::TESForm* CampfireForm(const Properties& a_props)
 		{
 			auto* custom = a_props.Form<RE::TESForm>("LZC_CampfireBurning");
@@ -386,7 +388,17 @@ namespace CampLayout
 			if (auto* base = ref ? ref->GetBaseObject() : nullptr) {
 				return base;
 			}
-			return custom ? custom : a_props.Form<RE::TESForm>("LZC_CampfirePlaced");
+			if (custom) {
+				return custom;
+			}
+			auto* anchor = a_props.Form<RE::TESObjectREFR>("LZC_FireClutterAnchor");
+			auto* anchorBase = anchor ? anchor->GetBaseObject() : nullptr;
+			constexpr RE::FormID kXMarkerHeading = 0x34;
+			if (anchorBase && anchorBase->GetFormID() != kXMarker && anchorBase->GetFormID() != kXMarkerHeading &&
+				(anchorBase->Is(RE::FormType::Static) || anchorBase->Is(RE::FormType::MovableStatic) || anchorBase->Is(RE::FormType::Activator))) {
+				return anchorBase;
+			}
+			return a_props.Form<RE::TESForm>("LZC_CampfirePlaced");
 		}
 
 		// --- Layout helpers ----------------------------------------------------
