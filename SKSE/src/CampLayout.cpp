@@ -1827,7 +1827,8 @@ namespace CampLayout
 		std::vector<RE::ObjectRefHandle> newTents;  // placed by the last BuildCamp
 		std::vector<RE::ObjectRefHandle> lastPlaced;  // everything the last BuildCamp placed
 
-		void RefreshLanterns();
+		void                                      RefreshLanterns();
+		RE::BSTSmartPointer<RE::BSScript::Object> CampScript();
 
 		// With TentCollision off: the tent's loaded 3D stops colliding. It
 		// collides again when its 3D next loads without this.
