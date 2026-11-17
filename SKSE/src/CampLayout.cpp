@@ -376,6 +376,19 @@ namespace CampLayout
 			}
 		}
 
+		// The burning campfire: the base of LZC_CampfireBurning (a reference
+		// to the plugin's own campfire in the holding cell) if set, else
+		// LZC_CampfirePlaced (the vanilla one).
+		RE::TESForm* CampfireForm(const Properties& a_props)
+		{
+			auto* custom = a_props.Form<RE::TESForm>("LZC_CampfireBurning");
+			auto* ref = custom ? custom->As<RE::TESObjectREFR>() : nullptr;
+			if (auto* base = ref ? ref->GetBaseObject() : nullptr) {
+				return base;
+			}
+			return custom ? custom : a_props.Form<RE::TESForm>("LZC_CampfirePlaced");
+		}
+
 		// --- Layout helpers ----------------------------------------------------
 
 		// Place `index` in the fan: 0 in the middle, then alternately right and
@@ -1744,16 +1757,6 @@ namespace CampLayout
 				actors.push_back(alias ? alias->GetActorReference() : nullptr);
 			}
 			return actors;
-		}
-
-		// The burning campfire: LZC_CampfireBurning (a MovableStatic of the
-		// plugin's own) if set, else LZC_CampfirePlaced (the vanilla one).
-		RE::TESForm* CampfireForm(const Properties& a_props)
-		{
-			if (auto* custom = a_props.Form<RE::TESForm>("LZC_CampfireBurning")) {
-				return custom;
-			}
-			return a_props.Form<RE::TESForm>("LZC_CampfirePlaced");
 		}
 
 		std::vector<RE::ObjectRefHandle> newTents;  // placed by the last BuildCamp

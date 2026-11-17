@@ -99,9 +99,10 @@ TextureSet Property LZC_BedrollTextureRed Auto
 {The bedroll kit's cloth with BedrollStyle 3 (red).}
 Form Property LZC_CampfirePlaced Auto
 {Static or Activator: the burning campfire. Can be the vanilla one.}
-MovableStatic Property LZC_CampfireBurning Auto
-{Optional. A burning campfire of the plugin's own, used in place of
-LZC_CampfirePlaced (whose Form type the Creation Kit can't fill).}
+ObjectReference Property LZC_CampfireBurning Auto
+{Optional. A reference to a burning campfire of the plugin's own (in the
+holding cell): its base object is used in place of LZC_CampfirePlaced, whose
+Form type the Creation Kit can't fill.}
 Furniture Property LZC_CookingStation Auto
 {Optional. Furniture with the cooking pot's crafting keyword and an empty
 model (no furniture marker), placed hidden at the fire. Activating
