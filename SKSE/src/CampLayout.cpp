@@ -181,18 +181,35 @@ namespace CampLayout
 			return parts;
 		}
 
+		// Shows the lit or the unlit model. Both stay enabled, the other just
+		// hidden: enabling and disabling would fade them in and out. (Hiding
+		// lasts until the 3D next loads; OnObjectLoaded hides it again.)
+		void ShowLanternModel(const LanternParts& a_parts, bool a_lit)
+		{
+			for (auto* model : { a_parts.unlit, a_parts.lit }) {
+				if (!model) {
+					continue;
+				}
+				if (model->IsDisabled()) {
+					model->Enable(false);
+				}
+				if (auto* root = model->Get3D()) {
+					root->SetAppCulled(model == (a_lit ? a_parts.unlit : a_parts.lit) && a_parts.lit && a_parts.unlit);
+				}
+			}
+		}
+
+		// The light is the lantern's state: on when lit.
 		void SetLanternLit(const LanternParts& a_parts, bool a_lit)
 		{
-			for (auto* on : { a_lit ? a_parts.lit : a_parts.unlit, a_lit ? a_parts.light : nullptr }) {
-				if (on) {
-					on->Enable(false);
+			if (a_parts.light) {
+				if (a_lit) {
+					a_parts.light->Enable(false);
+				} else {
+					a_parts.light->Disable();
 				}
 			}
-			for (auto* off : { a_lit ? a_parts.unlit : a_parts.lit, a_lit ? nullptr : a_parts.light }) {
-				if (off) {
-					off->Disable();
-				}
-			}
+			ShowLanternModel(a_parts, a_lit);
 		}
 
 		bool IsLantern(const RE::TESObjectREFR* a_ref, const RE::BGSKeyword* a_keyword)
@@ -2110,6 +2127,27 @@ namespace CampLayout
 	void OnObjectLoaded(RE::TESObjectREFR* a_ref)
 	{
 		auto camp = a_ref ? CampScript() : nullptr;
+		// A lantern's model loading: show the one that matches its light.
+		if (camp) {
+			const Properties props(camp.get());
+			auto*            unlitKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword");
+			auto*            litKeyword = props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
+			if (IsLantern(a_ref, unlitKeyword) || IsLantern(a_ref, litKeyword)) {
+				const auto* placedValue = camp->GetVariable("placedRefs");
+				const auto  placed = placedValue && placedValue->IsArray() ? placedValue->GetArray() : nullptr;
+				std::vector<RE::TESObjectREFR*> refs;
+				for (std::size_t i = 0; placed && i < placed->size(); ++i) {
+					auto* form = FormValue(&(*placed)[i]);
+					refs.push_back(form ? form->As<RE::TESObjectREFR>() : nullptr);
+				}
+				const auto* fireLight = refs.size() > kLight ? refs[kLight] : nullptr;
+				const auto  parts = FindLanternParts(a_ref, refs, fireLight, unlitKeyword, litKeyword);
+				if (parts.light) {
+					ShowLanternModel(parts, !parts.light->IsDisabled());
+				}
+				return;
+			}
+		}
 		const auto* collision = camp ? ScriptObjects::AutoProperty(camp.get(), "TentCollision") : nullptr;
 		if (!collision || !collision->IsBool() || collision->GetBool()) {
 			return;
