@@ -1447,6 +1447,17 @@ namespace CampLayout
 
 				// The tents' lanterns start unlit: the unlit model shows, the lit
 				// model and the light are off.
+				auto* lanternKeywordProp = _props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword");
+				logger::info("Lanterns: keyword {:08X}, {} clutter item(s) placed in all", lanternKeywordProp ? lanternKeywordProp->GetFormID() : 0,
+					a_refs.size() > kSlotCount + 1 ? a_refs.size() - kSlotCount - 1 : 0);
+				for (std::size_t i = kSlotCount + 1; i < a_refs.size(); ++i) {
+					auto* ref = a_refs[i];
+					auto* base = ref ? ref->GetBaseObject() : nullptr;
+					if (base && (base->Is(RE::FormType::Light) || base->Is(RE::FormType::Activator))) {
+						logger::info("  clutter {:08X}: base {:08X} ({}){}", ref->GetFormID(), base->GetFormID(),
+							base->Is(RE::FormType::Light) ? "light" : "activator", ref->IsDisabled() ? ", disabled" : "");
+					}
+				}
 				if (auto* lanternKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternKeyword")) {
 					auto* litKeyword = _props.Form<RE::BGSKeyword>("LZC_TentLanternLitKeyword");
 					const bool place = _props.Bool("PlaceTentLanterns", true);
@@ -1455,6 +1466,9 @@ namespace CampLayout
 							continue;
 						}
 						const auto parts = FindLanternParts(a_refs[i], a_refs, a_refs[kLight], lanternKeyword, litKeyword);
+						const auto pos = a_refs[i]->GetPosition();
+						logger::info("Lantern {:08X} at ({:.0f}, {:.0f}, {:.0f}): lit model {:08X}, light {:08X}; {}", a_refs[i]->GetFormID(), pos.x, pos.y, pos.z,
+							parts.lit ? parts.lit->GetFormID() : 0, parts.light ? parts.light->GetFormID() : 0, place ? "placed unlit" : "left out (Tent lanterns off)");
 						if (place) {
 							SetLanternLit(parts, false);
 							continue;
