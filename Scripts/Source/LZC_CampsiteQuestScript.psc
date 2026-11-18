@@ -297,9 +297,9 @@ Keyword Property LocTypeTown Auto
 ; ---------------------------------------------------------------------------
 Bool Property CampDeployed = False Auto Hidden
 ObjectReference Property CampCookBox Auto Hidden
+{This camp's cook box, a copy of LZC_CookBox placed with the camp.}
 ObjectReference[] Property FireClutterRefs Auto Hidden
 {With the firewood mechanic: the fire's clutter, shown only while it burns.}
-{This camp's cook box, a copy of LZC_CookBox placed with the camp.}
 Form[] extraFirewood  ; other firewood from addons (AddFirewood)
 Bool lightingFire = False
 ObjectReference strikeSeat
