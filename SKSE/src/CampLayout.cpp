@@ -1,6 +1,7 @@
 #include "CampLayout.h"
 
 #include "CampKits.h"
+#include "PluginProperties.h"
 
 #include "BedrollSeats.h"
 #include "GrassHider.h"
@@ -262,6 +263,14 @@ namespace CampLayout
 				// added to the plugin later would never show up in old saves.
 				if (auto* list = PluginList(a_name)) {
 					for (auto* form : list->forms) {
+						forms.push_back(form ? form->As<T>() : nullptr);
+					}
+					return forms;
+				}
+				// The same goes for the clutter sets and every other object list:
+				// they're read from the plugin file itself.
+				if (const auto* fromPlugin = PluginProperties::ObjectArray(a_name)) {
+					for (auto* form : *fromPlugin) {
 						forms.push_back(form ? form->As<T>() : nullptr);
 					}
 					return forms;

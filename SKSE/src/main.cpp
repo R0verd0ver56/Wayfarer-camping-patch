@@ -4,6 +4,7 @@
 #include "Events.h"
 #include "GrassHider.h"
 #include "Menu.h"
+#include "PluginProperties.h"
 #include "Papyrus.h"
 #include "Serialization.h"
 #include "VendorKits.h"
@@ -51,6 +52,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		} else if (a_message->type == SKSE::MessagingInterface::kDataLoaded) {
 			Events::Install();
 			VendorKits::Inject();
+			PluginProperties::Preload();
 			BedrollSeats::InstallSleepMenu();
 			CampCooking::Install();
 		} else if (a_message->type == SKSE::MessagingInterface::kPostLoadGame ||

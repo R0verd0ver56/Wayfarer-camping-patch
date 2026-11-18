@@ -21,6 +21,7 @@
 #include <fstream>
 #include <cctype>
 #include <limits>
+#include <cstring>
 #include <map>
 #include <mutex>
 #include <numbers>
