@@ -21,7 +21,7 @@ namespace Papyrus
 	namespace
 	{
 		constexpr auto         kClass = "LZC_CampsiteQuestScript"sv;
-		constexpr std::int32_t kVersion = 21;
+		constexpr std::int32_t kVersion = 22;
 
 		constexpr RE::FormID kXMarkerHeading = 0x34;  // Skyrim.esm
 

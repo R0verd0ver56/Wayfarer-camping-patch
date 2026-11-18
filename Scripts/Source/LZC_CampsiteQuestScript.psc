@@ -297,6 +297,8 @@ Keyword Property LocTypeTown Auto
 ; ---------------------------------------------------------------------------
 Bool Property CampDeployed = False Auto Hidden
 ObjectReference Property CampCookBox Auto Hidden
+ObjectReference[] Property FireClutterRefs Auto Hidden
+{With the firewood mechanic: the fire's clutter, shown only while it burns.}
 {This camp's cook box, a copy of LZC_CookBox placed with the camp.}
 Form[] extraFirewood  ; other firewood from addons (AddFirewood)
 Bool lightingFire = False
@@ -316,7 +318,7 @@ Int Property kCookingStation = 37 AutoReadOnly     ; hidden, at the fire
 Int Property kTub = 38 AutoReadOnly
 Int Property kSlotCount = 39 AutoReadOnly
 
-Int Property kNativeVersion = 21 AutoReadOnly         ; LazyCamping.dll needed
+Int Property kNativeVersion = 22 AutoReadOnly         ; LazyCamping.dll needed
 
 ObjectReference[] placedRefs
 ; With BedrollsStartRolled: each bedroll's rolled-up bedroll (None once
@@ -339,6 +341,7 @@ Bool busy = False
 ; ---------------------------------------------------------------------------
 Int Function GetVersion() Global Native
 ObjectReference Function GetCookBox() Global Native
+ObjectReference[] Function GetFireClutter() Global Native
 ; Leaves the stews out of the next Cook menu at akStation (no cooking pot).
 Function BeginCampCooking(ObjectReference akStation) Global Native
 ; The text for asKey in the game's language, from Interface/Translations/
@@ -550,6 +553,7 @@ Function SetUpCamp()
 	EndIf
 	RolledKits = GetRolledKits()
 	CampCookBox = GetCookBox()
+	FireClutterRefs = GetFireClutter()
 	PlacedOwners = GetPlacedOwners()
 	; The cloth sound plays as the camp appears.
 	If LZC_UnpackSound
@@ -871,6 +875,7 @@ Function SetFireLit(Bool lit)
 		If CampCookBox
 			CampCookBox.Enable()
 		EndIf
+		ShowFireClutter(True)
 	Else
 		firepit.Enable()
 		fire.Disable()
@@ -880,7 +885,22 @@ Function SetFireLit(Bool lit)
 		If CampCookBox
 			CampCookBox.Disable()
 		EndIf
+		ShowFireClutter(False)
 	EndIf
+EndFunction
+
+Function ShowFireClutter(Bool show)
+	Int i = 0
+	While FireClutterRefs && i < FireClutterRefs.Length
+		If FireClutterRefs[i]
+			If show
+				FireClutterRefs[i].Enable()
+			Else
+				FireClutterRefs[i].Disable()
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
 EndFunction
 
 ; Asks "Pack up your camp?" and packs up if the player says yes.
@@ -964,6 +984,7 @@ Function PackUpCamp()
 	RolledKits = None
 	PlacedOwners = None
 	CampCookBox = None
+	FireClutterRefs = None
 	Int i = 0
 	While i < placedRefs.Length
 		placedRefs[i] = None

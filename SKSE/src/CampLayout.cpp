@@ -119,6 +119,7 @@ namespace CampLayout
 			std::vector<RE::TESObjectREFR*> tubSeats;
 			std::vector<RE::TESObjectREFR*> rolledKits;  // by bedroll, None once unrolled (or never rolled)
 			RE::TESObjectREFR*              cookBox{ nullptr };
+			std::vector<RE::TESObjectREFR*> fireClutter;  // hidden until the fire is lit (firewood mechanic)
 			std::vector<std::int32_t>       owners;      // by returned reference: the layout slot it belongs to
 		};
 		Built built;
@@ -646,6 +647,17 @@ namespace CampLayout
 					return {};
 				}
 				Settle(refs);
+				// With the firewood mechanic the fire's clutter (the pot and all)
+				// waits until the fire is lit, as the cook box does.
+				built.fireClutter.clear();
+				if (refs[kFirepit]) {
+					for (std::size_t i = kSlotCount + 1; i < refs.size() && i < owners.size(); ++i) {
+						if (refs[i] && owners[i] == static_cast<std::int32_t>(kCampfire)) {
+							refs[i]->Disable();
+							built.fireClutter.push_back(refs[i]);
+						}
+					}
+				}
 				RollUp(refs, owners);
 				built.owners = owners;
 				Report(refs);
@@ -2027,6 +2039,7 @@ namespace CampLayout
 		std::vector<RE::TESObjectREFR*> GetRolledKits(RE::StaticFunctionTag*) { return built.rolledKits; }
 		std::vector<std::int32_t>       GetPlacedOwners(RE::StaticFunctionTag*) { return built.owners; }
 		RE::TESObjectREFR*              GetCookBox(RE::StaticFunctionTag*) { return built.cookBox; }
+		std::vector<RE::TESObjectREFR*> GetFireClutter(RE::StaticFunctionTag*) { return built.fireClutter; }
 		std::vector<RE::TESObjectREFR*> GetFireSeats(RE::StaticFunctionTag*) { return built.fireSeats; }
 		std::vector<std::int32_t>       GetFirePlaces(RE::StaticFunctionTag*) { return built.firePlaces; }
 		std::vector<RE::TESObjectREFR*> GetCampBeds(RE::StaticFunctionTag*) { return built.beds; }
@@ -2262,6 +2275,7 @@ namespace CampLayout
 		a_vm->RegisterFunction("GetRolledKits"sv, kClass, GetRolledKits);
 		a_vm->RegisterFunction("GetPlacedOwners"sv, kClass, GetPlacedOwners);
 		a_vm->RegisterFunction("GetCookBox"sv, kClass, GetCookBox);
+		a_vm->RegisterFunction("GetFireClutter"sv, kClass, GetFireClutter);
 		a_vm->RegisterFunction("UnrollBeds"sv, kClass, UnrollBeds);
 	}
 }
