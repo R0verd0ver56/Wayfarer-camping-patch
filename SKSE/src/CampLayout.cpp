@@ -31,16 +31,18 @@ namespace CampLayout
 		constexpr std::size_t kLight = 1;
 		constexpr std::size_t kPlayerSeat = 2;
 		constexpr std::size_t kFirstFollowerSeat = 3;  // 3-7
-		constexpr std::size_t kFirstTent = 8;          // 8-10
-		constexpr std::size_t kFirstBedroll = 11;      // 11-22, the player's first
-		constexpr std::size_t kFirstBedrollSeat = 23;  // 23-34, one on each bedroll
-		constexpr std::size_t kFirepit = 35;
-		constexpr std::size_t kChoppingBlock = 36;
-		constexpr std::size_t kCookingStation = 37;
-		constexpr std::size_t kTub = 38;
-		constexpr std::size_t kSlotCount = 39;
+		// Expanded Tents: six tent slots instead of three.
+		constexpr std::size_t kFirstTent = 8;          // 8-13
+		constexpr std::size_t kFirstBedroll = 14;      // 14-25, the player's first
+		constexpr std::size_t kFirstBedrollSeat = 26;  // 26-37, one on each bedroll
+		constexpr std::size_t kFirepit = 38;
+		constexpr std::size_t kChoppingBlock = 39;
+		constexpr std::size_t kCookingStation = 40;
+		constexpr std::size_t kTub = 41;
+		constexpr std::size_t kSlotCount = 42;
 
-		constexpr std::int32_t kMaxTents = 3;
+		constexpr std::int32_t kMaxTents = 6;       // Expanded Tents
+		constexpr std::int32_t kMaxLargeTents = 3;  // Expanded Tents
 		constexpr std::int32_t kMaxBedrolls = 12;
 		constexpr std::int32_t kRingBedrolls = 6;
 		constexpr std::int32_t kOutsideBedrolls = 3;  // most bedrolls outside the tents, once they're full
@@ -69,7 +71,8 @@ namespace CampLayout
 		constexpr float kTubInTentRight = 137.0f;
 		constexpr float kTubInTentTurn = 20.0f;
 		constexpr float kFireHalfSize = 50.0f;
-		constexpr float kFanStep = 70.0f;
+		constexpr float kFanStep = 48.0f;           // Expanded Tents (was 70)
+		constexpr float kLargeTentFanStep = 85.0f;  // Expanded Tents
 		constexpr float kRingStep = 50.0f;
 		constexpr float kSeatStep = 60.0f;
 		constexpr float kChoppingBlockGap = 60.0f;
@@ -941,17 +944,24 @@ namespace CampLayout
 			void ChooseTents()
 			{
 				_bedrollsCarried = Count(_props.Form<RE::TESForm>("LZC_BedrollKit"));
-				for (std::size_t type = 0; type < _tentTypes.size() && _tents.empty() && _bedrollsCarried > 0; ++type) {
-					const auto& kind = _tentTypes[type];
-					if (kind.size == kLarge && kind.kit && Count(kind.kit) > 0) {
-						_tents.push_back({ nullptr, kLarge, static_cast<std::int32_t>(type) });
-						_tents.back().owner = TakeKit(kind.kit);
-					}
-				}
 				const auto room = [&] {
 					return static_cast<std::int32_t>(_tents.size()) < kMaxTents &&
 					       static_cast<std::int32_t>(_tents.size()) < _bedrollsCarried;
 				};
+				// Expanded Tents: up to kMaxLargeTents large tents, every large kit
+				// carried (in colour order); the first is the player's.
+				std::int32_t largeCount = 0;
+				for (std::size_t type = 0; type < _tentTypes.size() && room() && largeCount < kMaxLargeTents; ++type) {
+					const auto& kind = _tentTypes[type];
+					if (kind.size != kLarge || !kind.kit) {
+						continue;
+					}
+					for (std::int32_t have = Count(kind.kit); have > 0 && room() && largeCount < kMaxLargeTents; --have) {
+						_tents.push_back({ nullptr, kLarge, static_cast<std::int32_t>(type) });
+						_tents.back().owner = TakeKit(kind.kit);
+						++largeCount;
+					}
+				}
 				for (std::size_t type = 0; type < _tentTypes.size() && room(); ++type) {
 					const auto& kind = _tentTypes[type];
 					if (kind.size != kSmall || !kind.kit) {
@@ -1036,14 +1046,17 @@ namespace CampLayout
 					if (!tent.form && !forms.empty()) {
 						tent.form = forms[0];
 					}
-					const float bearing = FanBearing(static_cast<std::int32_t>(t));
+					// Expanded Tents: large tents fan out wider.
+					const float bearing = tent.size == kLarge ?
+					                          FanBearing(static_cast<std::int32_t>(t)) * (kLargeTentFanStep / kFanStep) :
+					                          FanBearing(static_cast<std::int32_t>(t));
 					const float distance = tent.size == kLarge ?
 					                           kLargeTentDistance + (fireOutside ? kLargeTentOutside : 0.0f) :
 					                           kSmallTentDistance;
 					tent.fwd = kSeatRadius + distance * Cos(bearing);
 					tent.side = distance * Sin(bearing);
 					tent.turn = bearing + 180.0f;
-					if (t > 0 && _tents[0].size == kLarge) {
+					if (t > 0 && _tents[0].size == kLarge && tent.size == kSmall) {
 						const float sideSign = bearing < 0.0f ? -1.0f : 1.0f;
 						tent.fwd = kSeatRadius + kSideTentForward + (fireOutside ? kSideTentOutside : 0.0f);
 						tent.side = sideSign * kSideTentSide;
